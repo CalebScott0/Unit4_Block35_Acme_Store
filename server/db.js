@@ -40,6 +40,14 @@ const createProduct = async ({ name }) => {
   const dbResponse = await client.query(SQL, [uuid.v4(), name]);
   return dbResponse.rows[0];
 };
+// returns an array of products in the database
+const fetchProducts = async () => {
+  const SQL = `
+          SELECT * FROM products;
+      `;
+  const dbResponse = await client.query(SQL);
+  return dbResponse.rows;
+};
 /* creates a user in the database and returns the created record. 
 The password of the user should be hashed using bcrypt. */
 const createUser = async ({ username, password }) => {
@@ -57,19 +65,36 @@ const createUser = async ({ username, password }) => {
 // returns an array of users in the database
 const fetchUsers = async () => {
   const SQL = `
-        SELECT * FROM users;
+        SELECT * FROM users ORDER BY username;
     `;
   const dbResponse = await client.query(SQL);
   return dbResponse.rows;
 };
-// returns an array of products in the database
-const fetchProducts = async () => {
+// creates a favorite in the database and returns the created record
+const createFavorite = async ({ user_id, product_id }) => {
   const SQL = `
-        SELECT * FROM products;
+        INSERT INTO favorites(id, user_id, product_id) 
+        VALUES($1, $2, $3) RETURNING *;
     `;
-  const dbResponse = await client.query(SQL);
+  const dbResponse = await client.query(SQL, [uuid.v4(), user_id, product_id]);
+  return dbResponse.rows[0];
+};
+// returns an array of favorites for a user
+const fetchFavorites = async ({ user_id }) => {
+  const SQL = `
+        SELECT * FROM favorites WHERE user_id=$1;
+    `;
+  const dbResponse = await client.query(SQL, [user_id]);
   return dbResponse.rows;
 };
+// deletes a favorite in the db
+const destroyFavorite = async ({ id, user_id }) => {
+  const SQL = `
+        DELETE FROM favorites WHERE id=$1 AND user_id=$2;
+    `;
+  await client.query(SQL, [id, user_id]);
+};
+
 module.exports = {
   client,
   createTables,
@@ -77,4 +102,7 @@ module.exports = {
   createUser,
   fetchUsers,
   fetchProducts,
+  createFavorite,
+  fetchFavorites,
+  destroyFavorite,
 };
