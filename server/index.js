@@ -1,5 +1,4 @@
 // express api server
-const e = require("express");
 const {
   client,
   createFavorite,
